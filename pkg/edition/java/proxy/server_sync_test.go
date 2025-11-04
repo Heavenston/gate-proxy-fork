@@ -27,11 +27,11 @@ func TestServerSyncPreservesAPIServers(t *testing.T) {
 	apiServer1 := NewServerInfo("api-server1", mustParseAddr("localhost:25567"))
 	apiServer2 := NewServerInfo("api-server2", mustParseAddr("localhost:25568"))
 
-	_, err := proxy.Register(apiServer1)
+	_, err := proxy.Register(apiServer1, RegisteredServerOverrides{})
 	if err != nil {
 		t.Fatalf("Failed to register API server1: %v", err)
 	}
-	_, err = proxy.Register(apiServer2)
+	_, err = proxy.Register(apiServer2, RegisteredServerOverrides{})
 	if err != nil {
 		t.Fatalf("Failed to register API server2: %v", err)
 	}
@@ -370,7 +370,7 @@ func TestServerRegistrationEvents(t *testing.T) {
 
 	// Register a server
 	serverInfo := NewServerInfo("test-server", mustParseAddr("localhost:25565"))
-	_, err = proxy.Register(serverInfo)
+	_, err = proxy.Register(serverInfo, RegisteredServerOverrides{})
 	if err != nil {
 		t.Fatalf("Failed to register server: %v", err)
 	}
@@ -448,7 +448,7 @@ func TestServerRegistrationEventsMultiple(t *testing.T) {
 	}
 
 	for _, s := range servers {
-		_, err := proxy.Register(s)
+		_, err := proxy.Register(s, RegisteredServerOverrides{})
 		if err != nil {
 			t.Fatalf("Failed to register server %s: %v", s.Name(), err)
 		}

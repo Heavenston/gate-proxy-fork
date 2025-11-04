@@ -57,7 +57,7 @@ func (s *Service) RegisterServer(ctx context.Context, c *connect.Request[pb.Regi
 	serverAddr := netutil.NewAddr(c.Msg.Address, "tcp")
 	serverInfo := proxy.NewServerInfo(c.Msg.Name, serverAddr)
 
-	_, err := s.p.Register(serverInfo)
+	_, err := s.p.Register(serverInfo, proxy.RegisteredServerOverrides{})
 	if err != nil {
 		if errors.Is(err, proxy.ErrServerAlreadyExists) {
 			return nil, connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("server %q already exists", serverInfo.Name()))

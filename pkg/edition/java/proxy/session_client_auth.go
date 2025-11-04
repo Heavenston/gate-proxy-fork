@@ -71,9 +71,7 @@ func (a *authSessionHandler) Disconnected() {
 }
 
 func (a *authSessionHandler) Activated() {
-	// Some connection types may need to alter the game profile.
-	gameProfile := *a.inbound.delegate.Type().AddGameProfileTokensIfRequired(
-		a.profile, a.config().Forwarding.Mode)
+	gameProfile := *a.profile
 	profileRequest := NewGameProfileRequestEvent(a.inbound, gameProfile, a.onlineMode)
 	a.eventMgr.Fire(profileRequest)
 	conn := a.inbound.delegate.MinecraftConn

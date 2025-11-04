@@ -2,11 +2,9 @@ package proxy
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -14,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"go.minekube.com/gate/pkg/edition/java/forge/modernforge"
-	"go.minekube.com/gate/pkg/edition/java/profile"
 	"go.minekube.com/gate/pkg/edition/java/proto/state/states"
 
 	"github.com/dboslee/lru"
@@ -157,10 +154,15 @@ func (i *serverInfo) String() string { return fmt.Sprintf("%s (%s)", i.name, i.a
 //
 //
 
+type RegisteredServerOverrides struct {
+	Forwarding *config.Forwarding
+}
+
 // RegisteredServer is a backend server that has been registered with the proxy.
 type RegisteredServer interface {
 	ServerInfo() ServerInfo
 	Players() Players // The players connected to the server on THIS proxy.
+	Overrides() RegisteredServerOverrides
 }
 
 // RegisteredServerEqual returns true if RegisteredServer a and b are equal.
@@ -170,12 +172,13 @@ func RegisteredServerEqual(a, b RegisteredServer) bool {
 }
 
 type registeredServer struct {
-	info    ServerInfo
-	players *players
+	info      ServerInfo
+	players   *players
+	overrides RegisteredServerOverrides
 }
 
-func newRegisteredServer(info ServerInfo) *registeredServer {
-	return &registeredServer{info: info, players: newPlayers()}
+func newRegisteredServer(info ServerInfo, overrides RegisteredServerOverrides) *registeredServer {
+	return &registeredServer{info: info, players: newPlayers(), overrides: overrides}
 }
 
 func (r *registeredServer) ServerInfo() ServerInfo {
@@ -184,6 +187,10 @@ func (r *registeredServer) ServerInfo() ServerInfo {
 
 func (r *registeredServer) Players() Players {
 	return r.players
+}
+
+func (r *registeredServer) Overrides() RegisteredServerOverrides {
+	return r.overrides
 }
 
 var _ RegisteredServer = (*registeredServer)(nil)
@@ -358,18 +365,6 @@ type HandshakeAddresser interface {
 
 func (s *serverConnection) handshakeAddr(vHost string, player Player) string {
 	var ha HandshakeAddresser
-	var ok bool
-	if ha, ok = s.Server().ServerInfo().(HandshakeAddresser); !ok {
-		if ha, ok = s.Server().(HandshakeAddresser); !ok {
-			switch s.config().Forwarding.Mode {
-			case config.LegacyForwardingMode:
-				return s.createLegacyForwardingAddress()
-			case config.BungeeGuardForwardingMode:
-				secret := s.config().Forwarding.BungeeGuardSecret
-				return s.createBungeeGuardForwardingAddress(secret)
-			}
-		}
-	}
 	if ha != nil {
 		vHost = ha.HandshakeAddr(vHost, player)
 	}
@@ -490,48 +485,6 @@ func (s *serverConnection) startHandshake(
 	// Block until we get a result
 	r := <-resultChan
 	return r.connectionResult, r.error
-}
-
-func (s *serverConnection) createLegacyForwardingAddress() string {
-	// BungeeCord IP forwarding is simply a special injection after the "address" in the handshake,
-	// separated by \0 (the null byte). In order, you send the original host, the player's IP, their
-	// ID (undashed), and if you are in online-mode, their login properties (from Mojang).
-	playerIP := netutil.Host(s.player.RemoteAddr())
-	b := new(strings.Builder)
-	b.WriteString(s.server.ServerInfo().Addr().String())
-	const sep = "\000"
-	b.WriteString(sep)
-	b.WriteString(playerIP)
-	b.WriteString(sep)
-	b.WriteString(s.player.profile.ID.Undashed())
-	b.WriteString(sep)
-	props, err := json.Marshal(s.player.profile.Properties)
-	if err != nil { // should never happen
-		panic(err)
-	}
-	b.WriteString(string(props)) // first convert props to string
-	return b.String()
-}
-
-func (s *serverConnection) createBungeeGuardForwardingAddress(secret string) string {
-	// Bungeeguard IP forwading is the same as the legacy Bungeecord IP forwarding but with an additional
-	// property in the profile properties that contains the bungeeguard-token.
-	playerIP := netutil.Host(s.player.RemoteAddr())
-	b := new(strings.Builder)
-	b.WriteString(s.server.ServerInfo().Addr().String())
-	const sep = "\000"
-	b.WriteString(sep)
-	b.WriteString(playerIP)
-	b.WriteString(sep)
-	b.WriteString(s.player.profile.ID.Undashed())
-	b.WriteString(sep)
-	props, err := json.Marshal(
-		append(s.player.profile.Properties, profile.Property{Name: "bungeeguard-token", Value: secret}))
-	if err != nil { // should never happen
-		panic(err)
-	}
-	b.WriteString(string(props)) // first convert props to string
-	return b.String()
 }
 
 // Returns the active backend server connection or false if inactive.

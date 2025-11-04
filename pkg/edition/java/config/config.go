@@ -21,7 +21,7 @@ var DefaultConfig = Config{
 	Auth:                          Auth{},
 	OnlineModeKickExistingPlayers: false,
 	Forwarding: Forwarding{
-		Mode:           LegacyForwardingMode,
+		Mode:           NoneForwardingMode,
 		VelocitySecret: "",
 	},
 	Status: Status{
@@ -142,9 +142,8 @@ type (
 		ShowPlugins bool `yaml:"showPlugins"`
 	}
 	Forwarding struct {
-		Mode              ForwardingMode `yaml:"mode"`
-		VelocitySecret    string         `yaml:"velocitySecret"`    // Used with "velocity" mode
-		BungeeGuardSecret string         `yaml:"bungeeGuardSecret"` // Used with "bungeeguard" mode
+		Mode           ForwardingMode `yaml:"mode"`
+		VelocitySecret string         `yaml:"velocitySecret"` // Used with "velocity" mode
 	}
 	Compression struct {
 		Threshold int `yaml:"threshold"`
@@ -174,13 +173,14 @@ type (
 type ForwardingMode string
 
 const (
-	NoneForwardingMode   ForwardingMode = "none"
-	LegacyForwardingMode ForwardingMode = "legacy"
+	NoneForwardingMode ForwardingMode = "none"
 	// VelocityForwardingMode is a forwarding mode specified by the Velocity java proxy and
 	// supported by PaperSpigot for versions starting at 1.13.
 	VelocityForwardingMode ForwardingMode = "velocity"
-	// BungeeGuardForwardingMode is a forwarding mode used by versions lower than 1.13
-	BungeeGuardForwardingMode ForwardingMode = "bungeeguard"
+
+	// Removed
+	// LegacyForwardingMode ForwardingMode = "legacy"
+	// BungeeGuardForwardingMode ForwardingMode = "bungeeguard"
 )
 
 // Validate validates Config.
@@ -227,9 +227,9 @@ func (c *Config) Validate() (warns []error, errs []error) {
 	case NoneForwardingMode:
 		w("Player forwarding is disabled! Backend servers will have players with " +
 			"offline-mode UUIDs and the same IP as the proxy.")
-	case LegacyForwardingMode, VelocityForwardingMode, BungeeGuardForwardingMode:
+	case VelocityForwardingMode:
 	default:
-		e("Unknown forwarding mode %q, must be one of none,legacy,velocity,bungeeguard", c.Forwarding.Mode)
+		e("Unknown forwarding mode %q, must be one of none,velocity", c.Forwarding.Mode)
 	}
 
 	if len(c.Servers) == 0 {

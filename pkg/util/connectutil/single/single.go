@@ -85,7 +85,7 @@ func (a *listener) AcceptEndpoint(ctx context.Context, endpoint connectutil.Endp
 	}
 
 	// Try register server
-	if _, err := a.ServerRegistry.Register(svr); err != nil {
+	if _, err := a.ServerRegistry.Register(svr, proxy.RegisteredServerOverrides{}); err != nil {
 		if errors.Is(err, proxy.ErrServerAlreadyExists) {
 			return status.Error(codes.AlreadyExists, "another endpoint with the same name is already registered")
 		}

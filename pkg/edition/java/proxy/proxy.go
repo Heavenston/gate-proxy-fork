@@ -335,7 +335,7 @@ func (p *Proxy) init() (err error) {
 			}
 
 			// Register the new/updated server
-			_, err = p.Register(info)
+			_, err = p.Register(info, RegisteredServerOverrides{})
 			if err != nil {
 				p.log.Error(err, "could not register server", "server", info)
 			} else {
@@ -454,7 +454,7 @@ type ServerRegistrar interface {
 	// Register registers a server with the proxy and returns it.
 	// If the there is already a server with the same info
 	// error ErrServerAlreadyExists is returned and the already registered server.
-	Register(info ServerInfo) (RegisteredServer, error)
+	Register(info ServerInfo, overrides RegisteredServerOverrides) (RegisteredServer, error)
 	// Unregister unregisters the server exactly matching the
 	// given ServerInfo and returns true if found.
 	Unregister(info ServerInfo) bool
@@ -466,7 +466,7 @@ var ErrServerAlreadyExists = errors.New("server already exists")
 var _ ServerRegistry = (*Proxy)(nil)
 
 // Register - See ServerRegistrar
-func (p *Proxy) Register(info ServerInfo) (RegisteredServer, error) {
+func (p *Proxy) Register(info ServerInfo, overrides RegisteredServerOverrides) (RegisteredServer, error) {
 	if info == nil {
 		return nil, errors.New("info must not be nil")
 	}
@@ -484,7 +484,7 @@ func (p *Proxy) Register(info ServerInfo) (RegisteredServer, error) {
 	if exists, ok := p.servers[name]; ok {
 		return exists, ErrServerAlreadyExists
 	}
-	rs := newRegisteredServer(info)
+	rs := newRegisteredServer(info, overrides)
 	p.servers[name] = rs
 	// Note: We don't mark API-registered servers as config-managed
 	// so they won't be unregistered during config reloads

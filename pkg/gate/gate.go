@@ -339,9 +339,6 @@ func LoadConfig(v *viper.Viper) (*config.Config, error) {
 	if velocitySecret := v.GetString("velocitySecret"); velocitySecret != "" {
 		cfg.Config.Forwarding.VelocitySecret = velocitySecret
 	}
-	if bungeeGuardSecret := v.GetString("bungeeGuardSecret"); bungeeGuardSecret != "" {
-		cfg.Config.Forwarding.BungeeGuardSecret = bungeeGuardSecret
-	}
 
 	// Normalize forced hosts keys to lowercase
 	if len(cfg.Config.ForcedHosts) > 0 {
