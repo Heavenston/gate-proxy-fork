@@ -104,11 +104,6 @@ var allowedStrategies = []Strategy{
 func (c Config) Validate() (warns []error, errs []error) {
 	e := func(m string, args ...any) { errs = append(errs, fmt.Errorf(m, args...)) }
 
-	if len(c.Routes) == 0 {
-		e("No routes configured")
-		return
-	}
-
 	for i, ep := range c.Routes {
 		if len(ep.Host) == 0 {
 			e("Route %d: no host configured", i)
