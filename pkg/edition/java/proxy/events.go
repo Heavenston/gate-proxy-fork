@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"go.minekube.com/gate/pkg/edition/java/lite/config"
-	"go.minekube.com/gate/pkg/edition/java/netmc"
 	"go.minekube.com/gate/pkg/edition/java/proxy/internal/resourcepack"
 	"go.minekube.com/gate/pkg/util/uuid"
 
@@ -1374,17 +1373,12 @@ func (e *ServerUnregisteredEvent) ServerInfo() ServerInfo {
 //
 
 type PlayerPreLoginChoseRouteEvent struct {
+	inbound Inbound
 	forcedLiteRoute *config.Route
-	conn netmc.MinecraftConn
-	handshake *packet.Handshake
 }
 
-func (e *PlayerPreLoginChoseRouteEvent) Conn() netmc.MinecraftConn {
-	return e.conn
-}
-
-func (e *PlayerPreLoginChoseRouteEvent) Handshake() *packet.Handshake {
-	return e.handshake
+func (e *PlayerPreLoginChoseRouteEvent) Inbound() Inbound {
+	return e.inbound
 }
 
 func (e *PlayerPreLoginChoseRouteEvent) ForcedLiteRoute() *config.Route {

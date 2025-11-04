@@ -95,11 +95,17 @@ func (h *handshakeSessionHandler) handleHandshake(handshake *packet.Handshake, p
 	// Update connection to requested state and protocol sent in the packet.
 	h.conn.SetProtocol(proto.Protocol(handshake.ProtocolVersion))
 
+	vHost := netutil.NewAddr(
+		fmt.Sprintf("%s:%d", handshake.ServerAddress, handshake.Port),
+		h.conn.LocalAddr().Network(),
+	)
+	handshakeIntent := handshake.Intent()
+	inbound := newInitialInbound(h.conn, vHost, handshakeIntent)
+
 	if nextState == state.Login {
 		evt := &PlayerPreLoginChoseRouteEvent{
 			forcedLiteRoute: nil,
-			conn: h.conn,
-			handshake: handshake,
+			inbound: inbound,
 		}
 		h.eventMgr.Fire(evt)
 		if evt.forcedLiteRoute != nil {
@@ -127,13 +133,6 @@ func (h *handshakeSessionHandler) handleHandshake(handshake *packet.Handshake, p
 			}
 		}
 	}
-
-	vHost := netutil.NewAddr(
-		fmt.Sprintf("%s:%d", handshake.ServerAddress, handshake.Port),
-		h.conn.LocalAddr().Network(),
-	)
-	handshakeIntent := handshake.Intent()
-	inbound := newInitialInbound(h.conn, vHost, handshakeIntent)
 
 	if handshakeIntent == packet.TransferHandshakeIntent && !h.config().AcceptTransfers {
 		_ = inbound.disconnect(&component.Translation{Key: "multiplayer.disconnect.transfers_disabled"})
