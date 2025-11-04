@@ -105,7 +105,7 @@ func (h *handshakeSessionHandler) handleHandshake(handshake *packet.Handshake, p
 	if nextState == state.Login {
 		evt := &PlayerPreLoginChoseRouteEvent{
 			forcedLiteRoute: nil,
-			inbound: inbound,
+			inbound:         inbound,
 		}
 		h.eventMgr.Fire(evt)
 		if evt.forcedLiteRoute != nil {

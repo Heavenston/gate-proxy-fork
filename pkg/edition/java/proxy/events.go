@@ -1373,7 +1373,7 @@ func (e *ServerUnregisteredEvent) ServerInfo() ServerInfo {
 //
 
 type PlayerPreLoginChoseRouteEvent struct {
-	inbound Inbound
+	inbound         Inbound
 	forcedLiteRoute *config.Route
 }
 

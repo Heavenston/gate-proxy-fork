@@ -14,9 +14,9 @@ import (
 // main is an example of how to use the ListServers method.
 func main() {
 	ctx := context.Background()
-	
+
 	client := gatev1connect.NewGateServiceClient(
-		http.DefaultClient, 
+		http.DefaultClient,
 		"http://localhost:8080",
 	)
 
