@@ -95,6 +95,21 @@ func (h *handshakeSessionHandler) handleHandshake(handshake *packet.Handshake, p
 	// Update connection to requested state and protocol sent in the packet.
 	h.conn.SetProtocol(proto.Protocol(handshake.ProtocolVersion))
 
+	if nextState == state.Login {
+		evt := &PlayerPreLoginChoseRouteEvent{
+			forcedLiteRoute: nil,
+			conn: h.conn,
+			handshake: handshake,
+		}
+		h.eventMgr.Fire(evt)
+		if evt.forcedLiteRoute != nil {
+			h.conn.SetState(nextState)
+			dialTimeout := time.Duration(h.config().ConnectionTimeout)
+			lite.ForwardForced(dialTimeout, evt.forcedLiteRoute, h.log, h.conn, handshake, pc)
+			return
+		}
+	}
+
 	// Lite mode ping resolver
 	var resolvePingResponse pingResolveFunc
 	if h.config().Lite.Enabled {

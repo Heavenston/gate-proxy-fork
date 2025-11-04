@@ -3,6 +3,8 @@ package proxy
 import (
 	"net"
 
+	"go.minekube.com/gate/pkg/edition/java/lite/config"
+	"go.minekube.com/gate/pkg/edition/java/netmc"
 	"go.minekube.com/gate/pkg/edition/java/proxy/internal/resourcepack"
 	"go.minekube.com/gate/pkg/util/uuid"
 
@@ -1363,4 +1365,32 @@ type ServerUnregisteredEvent struct {
 // ServerInfo returns the server info of the server that was unregistered.
 func (e *ServerUnregisteredEvent) ServerInfo() ServerInfo {
 	return e.server
+}
+
+//
+//
+//
+//
+//
+
+type PlayerPreLoginChoseRouteEvent struct {
+	forcedLiteRoute *config.Route
+	conn netmc.MinecraftConn
+	handshake *packet.Handshake
+}
+
+func (e *PlayerPreLoginChoseRouteEvent) Conn() netmc.MinecraftConn {
+	return e.conn
+}
+
+func (e *PlayerPreLoginChoseRouteEvent) Handshake() *packet.Handshake {
+	return e.handshake
+}
+
+func (e *PlayerPreLoginChoseRouteEvent) ForcedLiteRoute() *config.Route {
+	return e.forcedLiteRoute
+}
+
+func (e *PlayerPreLoginChoseRouteEvent) SetForcedLiteRoute(r *config.Route) {
+	e.forcedLiteRoute = r
 }

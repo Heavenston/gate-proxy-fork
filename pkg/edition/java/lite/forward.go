@@ -78,6 +78,40 @@ func Forward(
 	pipe(log, src, dst)
 }
 
+// ForwardForced forwards a client connection to a the given route.
+func ForwardForced(
+	dialTimeout time.Duration,
+	route *config.Route,
+	log logr.Logger,
+	client netmc.MinecraftConn,
+	handshake *packet.Handshake,
+	pc *proto.PacketContext,
+) {
+	defer func() { _ = client.Close() }()
+
+	srcConn, ok := netmc.Assert[interface{ Conn() net.Conn }](client)
+	if !ok {
+		log.Error(nil, "failed to assert connection as net.Conn")
+		return
+	}
+	src := srcConn.Conn()
+
+	backendAddr := route.Backend[0]
+	dst, err := dialRoute(client.Context(), dialTimeout, src.RemoteAddr(), route, backendAddr, handshake, pc, false)
+	if err != nil {
+		return
+	}
+	defer func() { _ = dst.Close() }()
+
+	if err = emptyReadBuff(client, dst); err != nil {
+		errs.V(log, err).Info("failed to empty client buffer", "error", err)
+		return
+	}
+
+	log.Info("forwarding connection", "backendAddr", backendAddr)
+	pipe(log, src, dst)
+}
+
 // errAllBackendsFailed is returned when all backends failed to dial.
 var errAllBackendsFailed = errors.New("all backends failed")
 
