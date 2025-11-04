@@ -120,9 +120,11 @@ func (h *handshakeSessionHandler) handleHandshake(handshake *packet.Handshake, p
 			lite.Forward(dialTimeout, h.config().Lite.Routes, h.log, h.conn, handshake, pc, h.proxy.Lite().StrategyManager())
 			return
 		}
-		// Resolve ping response for lite mode.
-		resolvePingResponse = func(log logr.Logger, statusRequestCtx *proto.PacketContext) (logr.Logger, *packet.StatusResponse, error) {
-			return lite.ResolveStatusResponse(dialTimeout, h.config().Lite.Routes, log, h.conn, handshake, pc, statusRequestCtx, h.proxy.Lite().StrategyManager())
+		if len(h.config().Lite.Routes) != 0 {
+			// Resolve ping response for lite mode.
+			resolvePingResponse = func(log logr.Logger, statusRequestCtx *proto.PacketContext) (logr.Logger, *packet.StatusResponse, error) {
+				return lite.ResolveStatusResponse(dialTimeout, h.config().Lite.Routes, log, h.conn, handshake, pc, statusRequestCtx, h.proxy.Lite().StrategyManager())
+			}
 		}
 	}
 
